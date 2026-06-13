@@ -28,7 +28,16 @@ func AdminHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 3: Access granted
+	// Step 3: Access granted - but check WHO is asking
+	if username != "svc_internal" {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Welcome to the internal panel, " + username + ".\n"))
+		w.Write([]byte("Hmm, this looks like an internal service dashboard, but you don't have the right privileges to see sensitive data.\n"))
+		w.Write([]byte("(Hint: not all internal accounts are created equal...)\n"))
+		return
+	}
+
+	// svc_internal gets the real flag
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Welcome to the admin panel, " + username + "!\n"))
 	w.Write([]byte("FLAG{h0st_h34d3r_4dm1n_byp4ss}\n"))
