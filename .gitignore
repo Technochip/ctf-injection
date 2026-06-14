@@ -1,0 +1,8 @@
+# # Logic Point: Exclude node modules and build outputs from version control
+node_modules/
+dist/
+.DS_Store
+*.log
+# # Logic Point: Exclude the local registration database dump from version control
+data_dump/
+
