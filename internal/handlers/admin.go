@@ -1,26 +1,44 @@
 package handlers
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"ctf-host-header-injection/internal/db"
 )
 
 func AdminHandler(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		http.Error(w, "Unauthorized: please log in", http.StatusUnauthorized)
+	// CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Forwarded-Host")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// Handle browser preflight request
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	username, valid := db.GetUserFromSession(cookie.Value)
-	if !valid {
-		http.Error(w, "Unauthorized: invalid session", http.StatusUnauthorized)
+	// Only allow POST for login
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	user := db.Users[username]
+	var creds credentials
+
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	user, ok := db.ValidateUser(creds.Username, creds.Password)
+	if !ok {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
+
 	if !user.IsAdmin {
 		http.Error(w, "403 Forbidden: You don't have admin privileges", http.StatusForbidden)
 		return
@@ -28,18 +46,16 @@ func AdminHandler(w http.ResponseWriter, r *http.Request) {
 
 	forwardedHost := r.Header.Get("X-Forwarded-Host")
 	if forwardedHost != "127.0.0.1" && forwardedHost != "localhost" {
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, "Proxy Error: Request blocked by access policy.\n\n")
-		fmt.Fprintf(w, "Request Details:\n")
-		fmt.Fprintf(w, "  Host: %s\n", r.Host)
-		fmt.Fprintf(w, "  X-Forwarded-Host: %s\n", forwardedHost)
-		fmt.Fprintf(w, "  X-Forwarded-For: %s\n", r.Header.Get("X-Forwarded-For"))
-		fmt.Fprintf(w, "\nAccess to this resource is restricted to internal services only.\n")
-		fmt.Fprintf(w, "Expected internal host. Got: '%s'\n", forwardedHost)
+		http.Error(w, "Proxy Error: Request blocked by internal access policy", http.StatusForbidden)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Welcome to the admin panel, " + username + "!\n"))
-	w.Write([]byte("FLAG{m4ss_h34d3r_4dm1n_byp4ss}\n"))
+
+	response := map[string]string{
+		"message": "Welcome to the admin panel, " + user.Username,
+		"flag":    "flag{m4ss_h34d3r_4dm1n_byp4ss}",
+	}
+
+	json.NewEncoder(w).Encode(response)
 }

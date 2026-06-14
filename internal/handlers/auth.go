@@ -12,10 +12,21 @@ import (
 type credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	IsAdmin  bool   `json:"is_admin"`
+	IsAdmin  bool   `json:"admin"`
 }
+// The RegisterHandler handles user registration requests.
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -37,11 +48,28 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Registration successful"))
+	if creds.IsAdmin {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Admin user registered successfully"))
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("User registered successfully"))
+	}
 }
 
+// The LoginHandler handles user login requests.
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
