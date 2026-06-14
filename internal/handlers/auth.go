@@ -12,6 +12,7 @@ import (
 type credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !db.AddUser(creds.Username, creds.Password) {
+	if !db.AddUser(creds.Username, creds.Password, creds.IsAdmin) {
 		http.Error(w, "Username already exists", http.StatusConflict)
 		return
 	}
@@ -61,7 +62,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	token := generateToken()
 	db.CreateSession(token, user.Username)
 
-	// Set cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    token,
