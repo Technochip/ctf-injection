@@ -7,7 +7,6 @@ import (
 )
 
 func AdminHandler(w http.ResponseWriter, r *http.Request) {
-	// Step 1: Check session - must be logged in
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
 		http.Error(w, "Unauthorized: please log in", http.StatusUnauthorized)
@@ -20,24 +19,18 @@ func AdminHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 2: Check X-Forwarded-Host header (the vulnerability)
+	user := db.Users[username]
+	if !user.IsAdmin {
+		http.Error(w, "403 Forbidden: You do not have admin privileges", http.StatusForbidden)
+		return
+	}
+
 	forwardedHost := r.Header.Get("X-Forwarded-Host")
 	if forwardedHost != "127.0.0.1" && forwardedHost != "localhost" {
 		http.Error(w, "403 Forbidden: Admin panel is only accessible from localhost", http.StatusForbidden)
 		return
 	}
 
-	// Step 3: Check if user is admin (via mass assignment vulnerability)
-	user := db.Users[username]
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Welcome to the internal panel, " + username + ".\n"))
-		w.Write([]byte("Hmm, this looks like an internal service dashboard, but you don't have the right privileges.\n"))
-		w.Write([]byte("(Hint: not all internal accounts are created equal...)\n"))
-		return
-	}
-
-	// Step 4: Full admin access - flag revealed
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Welcome to the admin panel, " + username + "!\n"))
 	w.Write([]byte("FLAG{h0st_h34d3r_4dm1n_byp4ss}\n"))
