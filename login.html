@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CTF</title>
+    <style>
+        :root {
+            --bg-color: #F7F4FF;
+            --card-bg: #FFFFFF;
+            --shadow: 0 2px 12px rgba(160,140,200,0.10);
+            --primary: #A78BFA;
+            --primary-hover: #7C3AED;
+            --secondary: #67E8B0;
+            --danger: #FCA5A5;
+            --text-primary: #2D2250;
+            --text-secondary: #7C6D99;
+            --border: #E8E0F8;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .card {
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            z-index: 10;
+        }
+        .title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .input-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+        .input-group input {
+            width: 100%;
+            border-radius: 9999px;
+            border: 1.5px solid var(--border);
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input::placeholder {
+            color: #B1A7C4;
+        }
+        .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        }
+        .btn-primary {
+            display: inline-block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 9999px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        .admin-link {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            border: 1.5px solid var(--primary);
+            color: var(--primary-hover);
+            background: white;
+            border-radius: 999px;
+            padding: 0.6rem 1.2rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            z-index: 20;
+        }
+        .admin-link:hover {
+            background: #F7F4FF;
+        }
+        .footer-text {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .footer-text a {
+            color: var(--primary-hover);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+        .divider {
+            height: 1px;
+            background-color: var(--border);
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- # Logic Point: Link routing to Admin Dashboard (admin.html) -->
+    <a href="admin.html" class="admin-link">Admin Dashboard &rarr;</a>
+    <div class="card">
+        <h1 class="title">Login</h1>
+        <p class="subtitle">Sign in to continue</p>
+        <!-- # Logic Point: Form submission validated via JavaScript fetch to /api/login -->
+        <form id="login-form">
+            <div class="input-group">
+                <!-- # Logic Point: Username input field -->
+                <input type="text" id="login-username" placeholder="Username" required>
+            </div>
+            <div class="input-group">
+                <!-- # Logic Point: Password input field -->
+                <input type="password" id="login-password" placeholder="Password" required>
+            </div>
+            <!-- # Logic Point: Submit button triggers JS validation -->
+            <button type="submit" class="btn-primary">Sign in</button>
+        </form>
+        <div class="divider"></div>
+        <!-- # Logic Point: Registration link routing to register.html -->
+        <p class="footer-text">New here? <a href="register.html">Create an account &rarr;</a></p>
+        <p id="response-msg" style="color:red; margin-top:10px;"></p>
+    </div>
+    <script>
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            const response = await fetch('http://localhost:4000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const responseText = await response.text();
+
+            if (response.ok) {
+                window.location.href =
+                    'user.html?username=' + encodeURIComponent(username);
+            } else {
+                document.getElementById('response-msg').textContent = responseText;
+            }
+        } catch (error) {
+            document.getElementById('response-msg').textContent =
+                error.message;
+        }
+    });
+    </script>
+</body>
+</html>

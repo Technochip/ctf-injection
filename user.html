@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Home - CTF</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F7F4FF;
+            --card-bg: #FFFFFF;
+            --shadow: 0 2px 12px rgba(160,140,200,0.10);
+            --primary: #A78BFA;
+            --primary-hover: #7C3AED;
+            --secondary: #67E8B0;
+            --danger: #FCA5A5;
+            --text-primary: #2D2250;
+            --text-secondary: #7C6D99;
+            --border: #E8E0F8;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .card {
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            z-index: 10;
+        }
+        .card-wide {
+            max-width: 520px;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+        .btn-ghost {
+            display: inline-block;
+            background-color: transparent;
+            color: var(--primary-hover);
+            text-decoration: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 9999px;
+            border: 1.5px solid var(--primary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            margin-top: 1rem;
+            width: 100%;
+        }
+        .btn-ghost:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-danger {
+            display: inline-block;
+            background-color: var(--danger);
+            color: #7F1D1D;
+            text-decoration: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 9999px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+        .btn-danger:hover {
+            background-color: #F87171;
+        }
+        .banner-mint {
+            background-color: #D1FAE5;
+            color: #065F46;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+        .info-box {
+            background-color: #EDE9FE;
+            color: #5B21B6;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: 0;
+            opacity: 0.12;
+        }
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background-color: var(--primary);
+            top: -100px;
+            left: -100px;
+        }
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background-color: var(--secondary);
+            bottom: -50px;
+            right: -50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="card card-wide">
+        <!-- # Logic Point: Display node for greeting the user with their dynamic username -->
+        <div class="banner-mint">Welcome back, <span id="username-display">Guest</span> &#127881;</div>
+        <p class="subtitle" style="margin-bottom: 0;">You're logged in as a regular user.</p>
+        <div class="info-box">
+            &#128274; Admin area is restricted. Complete the CTF challenges to unlock it.
+        </div>
+        <!-- # Logic Point: Routing link back to login page (login.html) -->
+        <a href="login.html" class="btn-ghost">Go back to login</a>
+        <button id="reset-btn" class="btn-danger" style="display:none;">Reset All Registration Data</button>
+        <p id="reset-feedback" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-secondary);display:none;"></p>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get('username');
+        if (username) {
+            document.getElementById('username-display').textContent = username;
+        }
+
+        let welcomeClickCount = 0;
+        const banner = document.querySelector('.banner-mint');
+        const resetBtn = document.getElementById('reset-btn');
+        const feedback = document.getElementById('reset-feedback');
+
+        banner.addEventListener('click', () => {
+            welcomeClickCount++;
+            if (welcomeClickCount >= 3) {
+                resetBtn.style.display = 'block';
+                feedback.textContent = 'Reset option unlocked.';
+                feedback.style.display = 'block';
+            }
+        });
+
+        resetBtn.addEventListener('click', async () => {
+            const confirmation = prompt('Type "RESET" to confirm clearing all registration data:');
+            if (confirmation === 'RESET') {
+                try {
+                    const response = await fetch('/api/reset', { method: 'POST' });
+                    if (response.ok) {
+                        feedback.textContent = 'All registration data has been reset.';
+                        feedback.style.color = '#065F46';
+                        resetBtn.style.display = 'none';
+                        welcomeClickCount = 0;
+                    } else {
+                        feedback.textContent = 'Reset failed. Try again.';
+                        feedback.style.color = '#991B1B';
+                    }
+                } catch (error) {
+                    feedback.textContent = 'An error occurred during reset.';
+                    feedback.style.color = '#991B1B';
+                }
+                feedback.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
