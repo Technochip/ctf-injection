@@ -2,13 +2,7 @@ package db
 
 import "ctf-host-header-injection/internal/models"
 
-var Users = map[string]models.User{
-	"svc_internal": {
-		Username: "svc_internal",
-		Password: "ChangeMe_2024!",
-		IsAdmin:  true,
-	},
-}
+var Users = map[string]models.User{}
 
 var Sessions = map[string]string{}
 
